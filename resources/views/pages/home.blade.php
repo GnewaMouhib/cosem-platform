@@ -62,10 +62,9 @@
                 <div class="animate-fade-in-up" style="animation-delay: .15s">
                     <div class="card p-3 sm:p-4 shadow-lift">
                         <div class="flex items-center gap-3 px-2 py-2.5 mb-3">
-                            <img src="{{ asset('images/logo.png') }}"
+                            <img src="{{ asset('images/cosem-logo.png') }}"
                                  alt="COSEM Logo"
-                                 class="w-8 h-8 rounded-lg object-contain bg-white shadow-sm p-0.5"
-                                 onerror="this.onerror=null;this.src='/images/logo.png';">
+                                 class="w-8 h-8 rounded-lg object-contain bg-white shadow-sm p-0.5">
                             <div class="leading-tight">
                                 <p class="text-sm font-bold text-ink">COSEM — Coopérative des Semences</p>
                                 <p class="text-[11px] text-slate-400">Vidéo officielle · Réseau de semences certifiées</p>

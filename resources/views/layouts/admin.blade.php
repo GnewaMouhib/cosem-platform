@@ -80,7 +80,7 @@
                            'bg-forest-700 text-white shadow-soft' => request()->routeIs($link['route']),
                            'text-slate-600 hover:bg-emerald-50 hover:text-forest-700' => !request()->routeIs($link['route']),
                        ])>
-                        <i data-lucide="{{ $link['icon'] }}" class="w-4.5 h-4.5 shrink-0"></i>
+                        <i data-lucide="{{ $link['icon'] }}" class="w-4 h-4 shrink-0"></i>
                         {{ $link['label'] }}
                         @if($link['route'] === 'admin.messages.index' && $unreadCount > 0)
                             <span class="ml-auto min-w-[22px] h-[22px] px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">

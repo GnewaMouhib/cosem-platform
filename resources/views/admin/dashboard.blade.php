@@ -78,22 +78,22 @@
             <h2 class="font-display text-lg font-bold text-ink mb-4">Actions rapides</h2>
             <div class="space-y-2.5">
                 <a href="{{ route('admin.cereales.create') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="plus-circle" class="w-4.5 h-4.5 text-forest-600"></i> Ajouter une variété céréalière
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-forest-600"></i> Ajouter une variété céréalière
                 </a>
                 <a href="{{ route('admin.legumineuses.create') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="plus-circle" class="w-4.5 h-4.5 text-harvest-600"></i> Ajouter une légumineuse
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-harvest-600"></i> Ajouter une légumineuse
                 </a>
                 <a href="{{ route('admin.stations.create') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="plus-circle" class="w-4.5 h-4.5 text-forest-600"></i> Ajouter une station
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-forest-600"></i> Ajouter une station
                 </a>
                 <a href="{{ route('admin.maladies.create') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="plus-circle" class="w-4.5 h-4.5 text-forest-600"></i> Ajouter une maladie
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-forest-600"></i> Ajouter une maladie
                 </a>
                 <a href="{{ route('admin.campagnes.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="pencil" class="w-4.5 h-4.5 text-harvest-600"></i> Modifier les chiffres de campagne
+                    <i data-lucide="pencil" class="w-4 h-4 text-harvest-600"></i> Modifier les chiffres de campagne
                 </a>
                 <a href="{{ route('admin.messages.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition text-sm font-semibold text-slate-700">
-                    <i data-lucide="inbox" class="w-4.5 h-4.5 text-harvest-600"></i> Consulter les messages
+                    <i data-lucide="inbox" class="w-4 h-4 text-harvest-600"></i> Consulter les messages
                 </a>
             </div>
         </div>

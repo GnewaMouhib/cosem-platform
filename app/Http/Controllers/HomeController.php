@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AnnualStat;
 use App\Models\Cereal;
 use App\Models\Station;
 use App\Models\Year;

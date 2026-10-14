@@ -206,7 +206,7 @@
 
             <a href="#calculateur" class="mt-6 inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-white border border-emerald-200 shadow-soft text-sm font-bold text-forest-700 hover:border-forest-600 hover:text-forest-800 hover:shadow-lift transition-all duration-200 group">
                 <span class="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center group-hover:bg-forest-700 group-hover:border-forest-700 transition-colors">
-                    <i data-lucide="calculator" class="w-4.5 h-4.5 text-forest-600 group-hover:text-white transition-colors"></i>
+                    <i data-lucide="calculator" class="w-4 h-4 text-forest-600 group-hover:text-white transition-colors"></i>
                 </span>
                 Simuler vos besoins en semences
                 <i data-lucide="arrow-down" class="w-4 h-4 text-forest-600 group-hover:translate-y-0.5 transition-transform"></i>
@@ -221,7 +221,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                 <div class="relative flex-1 max-w-xl">
                     <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="w-4.5 h-4.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
                     </span>
                     <input type="search" x-model.live="searchQuery"
                            placeholder="Rechercher une variété de céréale (ex: Karim, Razzak, Blé Dur...)"
@@ -265,12 +265,9 @@
                                 'name' => $cereal->name,
                                 'image' => $cereal->image_path ? asset($cereal->image_path) : null,
                                 'category' => $cereal->category_label ?? $cereal->category,
-                                'breeder' => $cereal->breeder ?? 'INRAT / COSEM',
-                                'type' => $cereal->type,
                                 'cycle' => $cereal->optimal_cycle ?? 'Moyen',
                                 'yield' => $cereal->yield_potential ?? 'Élevé',
                                 'quality' => $cereal->grain_quality ?? 'Excellente',
-                                'resistance' => $cereal->disease_resistance ?? 'Tolérant',
                                 'zones' => $cereal->targeted_zone ?? 'Nord et Centre',
                                 'badges' => $cardBadges,
                                 'semis' => $sowingPeriod,

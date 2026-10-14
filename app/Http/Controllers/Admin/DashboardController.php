@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AnnualStat;
 use App\Models\Cereal;
 use App\Models\ContactsMessage;
 use App\Models\Disease;

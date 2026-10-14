@@ -58,7 +58,7 @@
 
                 <button type="submit"
                         class="w-full btn-primary justify-center py-3.5 text-base">
-                    <i data-lucide="log-in" class="w-4.5 h-4.5"></i>
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
                     Se connecter
                 </button>
             </form>

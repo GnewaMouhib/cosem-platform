@@ -29,9 +29,4 @@ class Cereal extends Model
     {
         return ucwords(str_replace('_', ' ', $this->category));
     }
-
-    public function scopeCategory($query, string $category)
-    {
-        return $query->where('category', $category);
-    }
 }
