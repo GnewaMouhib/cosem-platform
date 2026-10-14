@@ -14,12 +14,12 @@ class MaladieSeeder extends Seeder
     public function run(): void
     {
         $images = [
-            'Rouille Jaune'     => 'images/maladies/rouille-jaune.jpg',
-            'Septoriose'        => 'images/maladies/septoriose.jpg',
-            'Rouille Brune'     => 'images/maladies/rouille-brune.jpg',
-            'Oïdium'            => 'images/maladies/oidium.jpg',
+            'Rouille Jaune' => 'images/maladies/rouille-jaune.jpg',
+            'Septoriose' => 'images/maladies/septoriose.jpg',
+            'Rouille Brune' => 'images/maladies/rouille-brune.jpg',
+            'Oïdium' => 'images/maladies/oidium.jpg',
             'Helminthosporiose' => 'images/maladies/helminthosporiose.jpg',
-            'Fusariose'         => 'images/maladies/fusariose.jpg',
+            'Fusariose' => 'images/maladies/fusariose.jpg',
         ];
 
         foreach ($images as $name => $path) {

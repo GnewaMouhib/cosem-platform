@@ -8,11 +8,11 @@ use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PulseController;
 use App\Http\Controllers\Admin\StationController as AdminStationController;
 use App\Http\Controllers\Admin\VarietyController;
+use App\Http\Controllers\CerealController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiseaseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\StationController;
-use App\Http\Controllers\CerealController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');

@@ -38,25 +38,25 @@ class Year extends Model
         $years = self::with('annualStats')->orderBy('harvest_year')->get();
 
         $series = [
-            'labels'   => [],
-            'durum'    => [],
-            'soft'     => [],
-            'barley'   => [],
-            'pulses'   => [],
+            'labels' => [],
+            'durum' => [],
+            'soft' => [],
+            'barley' => [],
+            'pulses' => [],
             'hectares' => [],
-            'cert'     => [],
+            'cert' => [],
         ];
 
         foreach ($years as $y) {
             $s = $y->annualStats->first();
 
-            $series['labels'][]   = $y->name;
-            $series['durum'][]    = (float) ($s?->durum_wheat_qx ?? 0);
-            $series['soft'][]     = (float) ($s?->soft_wheat_qx ?? 0);
-            $series['barley'][]   = (float) ($s?->barley_qx ?? 0);
-            $series['pulses'][]   = (float) ($s?->pulses_qx ?? 0);
+            $series['labels'][] = $y->name;
+            $series['durum'][] = (float) ($s?->durum_wheat_qx ?? 0);
+            $series['soft'][] = (float) ($s?->soft_wheat_qx ?? 0);
+            $series['barley'][] = (float) ($s?->barley_qx ?? 0);
+            $series['pulses'][] = (float) ($s?->pulses_qx ?? 0);
             $series['hectares'][] = (float) ($s?->total_hectares ?? 0);
-            $series['cert'][]     = $s?->certified_seed_pct !== null ? (float) $s->certified_seed_pct : null;
+            $series['cert'][] = $s?->certified_seed_pct !== null ? (float) $s->certified_seed_pct : null;
         }
 
         return $series;

@@ -29,15 +29,15 @@ class HomeController extends Controller
             $s = $y->annualStats->first();
 
             return [
-                'id'          => $y->id,
-                'name'        => $y->name,
-                'is_active'   => (bool) $y->is_active,
-                'durum_k'     => (int) round(($s->durum_wheat_qx ?? 215000) / 1000),
-                'hectares_k'  => (int) round(($s->total_hectares ?? 11000) / 1000),
-                'soft'        => (int) round($s->soft_wheat_qx ?? 8000),
-                'barley'      => (int) round($s->barley_qx ?? 7000),
-                'pulses'      => (int) round($s->pulses_qx ?? 2000),
-                'chart'       => [
+                'id' => $y->id,
+                'name' => $y->name,
+                'is_active' => (bool) $y->is_active,
+                'durum_k' => (int) round(($s->durum_wheat_qx ?? 215000) / 1000),
+                'hectares_k' => (int) round(($s->total_hectares ?? 11000) / 1000),
+                'soft' => (int) round($s->soft_wheat_qx ?? 8000),
+                'barley' => (int) round($s->barley_qx ?? 7000),
+                'pulses' => (int) round($s->pulses_qx ?? 2000),
+                'chart' => [
                     (float) ($s->durum_wheat_qx ?? 215000),
                     (float) ($s->soft_wheat_qx ?? 8000),
                     (float) ($s->barley_qx ?? 7000),
