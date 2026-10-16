@@ -75,7 +75,7 @@
             </template>
 
             {{-- Typing indicator --}}
-            <div x-show="loading" x-cloak class="flex justify-start">
+            <div x-show="isLoading" x-cloak class="flex justify-start">
                 <div class="rounded-2xl rounded-bl-md bg-white border border-emerald-100 px-4 py-3 shadow-soft flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style="animation-delay:0ms"></span>
                     <span class="h-2 w-2 rounded-full bg-harvest-500 animate-bounce" style="animation-delay:150ms"></span>
@@ -90,12 +90,12 @@
             <input type="text"
                    x-model="input"
                    @keydown.enter.prevent="send()"
-                   :disabled="loading"
+                   :disabled="isLoading"
                    placeholder="اكتب سؤالك هنا…"
                    class="flex-1 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent disabled:opacity-60" />
 
             <button type="submit"
-                    :disabled="loading || !input.trim()"
+                    :disabled="isLoading || !input.trim()"
                     class="shrink-0 h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-forest-700 text-white flex items-center justify-center shadow-soft hover:scale-105 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                     aria-label="Sift">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
@@ -112,7 +112,7 @@
     function qamhaChat() {
         return {
             open: false,
-            loading: false,
+            isLoading: false,
             input: '',
             messages: [
                 {
@@ -135,12 +135,19 @@
 
             async send() {
                 const text = this.input.trim();
-                if (!text || this.loading) return;
+                if (!text || this.isLoading) return;
 
                 this.messages.push({ role: 'user', text: text });
                 this.input = '';
-                this.loading = true;
+                this.isLoading = true;
                 this.scrollToBottom();
+
+                // Hard client-side stop: whatever happens below, the "قمحة يفكر…" bubble goes away.
+                // 25s > the server's 18s budget, so a slow-but-valid answer is never cut off.
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 25000);
+
+                const FALLBACK = 'سامحني يا خويا، صارت تعطلة خفيفة في الكونكسيون. عاود اسألني توا!';
 
                 try {
                     const res = await fetch('{{ url('/api/chat-qamha') }}', {
@@ -148,10 +155,13 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-CSRF': '{{ csrf_token() }}'
                         },
+                        signal: controller.signal,
                         body: JSON.stringify({
-                            messages: this.messages.map(m => ({
+                            messages: this.messages.slice(-12).map(m => ({
                                 role: m.role,
                                 content: m.text
                             }))
@@ -160,17 +170,27 @@
 
                     const data = await res.json().catch(() => ({}));
 
+                    // 429 = our own throttle or an upstream Gemini quota; both are expected, not bugs.
+                    const throttled = res.status === 429;
+
                     this.messages.push({
                         role: 'assistant',
-                        text: data.reply || "سماحني، صارت مشكلة صغيرة. عاود اسألني شوية من بعد."
+                        text: data.reply
+                            || (throttled
+                                ? 'يا خويا، عدد الأسئلة في الوقت هذا بزّاف برشا. استنى شوية وعاود اسألني توّا.'
+                                : FALLBACK)
                     });
                 } catch (e) {
                     this.messages.push({
                         role: 'assistant',
-                        text: "ما نجّمش نعطيك جواب دقيق في هذا التو، الاتصال مشى. عاود شوية من بعد."
+                        text: e && e.name === 'AbortError'
+                            ? 'واو، راه الرد يتأخر برشا. عاود اسألني توا ونديرلك جواب.'
+                            : FALLBACK
                     });
                 } finally {
-                    this.loading = false;
+                    // Guaranteed: no path can leave the typing bubble on screen.
+                    clearTimeout(timer);
+                    this.isLoading = false;
                     this.scrollToBottom();
                 }
             }

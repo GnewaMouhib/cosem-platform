@@ -17,6 +17,7 @@ class ChatQamhaController extends Controller
     - تحدث دائماً وأبداً باللهجة التونسية المفهومة، مكتوبة بحروف عربية فقط. إياك واستعمال الحروف اللاتينية أو الأرابيزي (مثل 7، 3، 9 بدل حروف) أو الكلمات الفرنسية.
     - إذا كتب الفلاح بالأرابيزي أو بالفرنسية أو باللاتيني، جاوبه بالعربي التونسي الواضح المكتوب بحروف عربية.
     - الاستثناء الوحيد: أسماء الشركات والمؤسسات التقنية (COSEM، INGC، INRAT 100) تبقى مكتوبة كما هي، والرقم العادي (160، 180) مقبول، أما حروف الأرابيزي فلا.
+    - قاعدة صارمة لا تخالفها أبداً: لا تكتب حرفاً لاتينياً واحداً في جوابك (ولا في العناوين ولا في الإملاء)، ولا تستعمل الأرابيزي (1، 2، 3، 4، 5، 6، 7، 8، 9 بدل الحروف)، واكتب الأرقام بالكلمات العربية (مثال: مئة وستون كيلوغرام بدل 160).
     - النبرة: ودّي ومحترم وقريب من الفلاحة، كخبير وحدّاد يعرف التراب التونسي مزيان، بغير مبالغة وبغير كلام تقني معقد.
     - احفظ معايير الـ INGC وأصناف كوزيم الـ 13 (قمح صلب: كريم، رزاق، سليم، معالي، خيار، INRAT 100، ذهبي. قمح لين: أوتيك، مктاريس، طاهنت. شعير: ريحان، كنوز. تريتيكال: الخير).
     - في مناطق المنوبة وجعيدة وتبرزة، انصح بالأصناف الممتازة كيما كريم ورزاق.
@@ -31,26 +32,53 @@ class ChatQamhaController extends Controller
 
     private const COOL_PREFIX = 'qamha.gemini.cool.';
 
-    private const ERROR_REPLY = 'سماحني يا خويا، أنا لواحد في هذا التو مع الاتصال. عاود اسألني شوية من بعد، هاني حاضر معاك.';
+    private const ERROR_REPLY = 'سامحني يا خويا، صارت تعطلة خفيفة في الكونكسيون. عاود اسألني توا!';
 
-    private const MISSING_KEY_REPLY = 'مفتاح GEMINI_API_KEY ناقص في ملف .env متاع كوزيم. عاود اسألني شوية من بعد.';
+    private const QUOTA_REPLY = 'يا خويا، عدد الأسئلة في الوقت هذا بزّاف برشا. استنى شوية وعاود اسألني توّا.';
 
+    /** Total wall-clock budget for the whole Gemini conversation, in seconds. */
+    private const MAX_DURATION = 18;
+
+    /**
+     * Entry point. Nothing may escape this method as a 500: the chat widget only
+     * knows how to render `reply`, so every failure must still return valid JSON
+     * containing one — that is what makes the "قمحة يفكر…" bubble disappear.
+     */
     public function chat(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'message' => 'nullable|string|max:4000',
-            'messages' => 'nullable|array|max:40',
-            'messages.*.role' => 'required_with:messages|string|in:user,assistant',
-            'messages.*.content' => 'required_with:messages|string|max:4000',
-        ]);
+        try {
+            return $this->respond($request);
+        } catch (\Throwable $e) {
+            // Never log $e->getMessage(): it can embed the key-bearing request URI.
+            Log::error('Qamha: unhandled '.get_class($e));
 
-        $key = $this->resolveKey();
+            return $this->gracefulFailure();
+        }
+    }
 
-        if ($key === '') {
-            return response()->json([
-                'reply' => self::MISSING_KEY_REPLY,
-                'warning' => 'GEMINI_API_KEY manque dans le fichier .env.',
-            ], 503);
+    private function respond(Request $request): JsonResponse
+    {
+        $start = microtime(true);
+
+        try {
+            $validated = $request->validate([
+                'message' => 'nullable|string|max:4000',
+                'messages' => 'nullable|array|max:40',
+                'messages.*.role' => 'required_with:messages|string|in:user,assistant',
+                'messages.*.content' => 'required_with:messages|string|max:4000',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Qamha: invalid payload ('.$e::class.').');
+
+            return $this->gracefulFailure();
+        }
+
+        $apiKey = trim((string) (config('services.gemini.key') ?: env('GEMINI_API_KEY')));
+
+        if (! $this->isValidKey($apiKey)) {
+            Log::warning('Qamha: GEMINI_API_KEY is missing or invalid.');
+
+            return $this->gracefulFailure();
         }
 
         [$history, $question] = $this->buildConversation($validated);
@@ -74,8 +102,8 @@ class ChatQamhaController extends Controller
         $res = null;
         $lastBody = '';
         $lastError = '';
-        $start = microtime(true);
-        $deadline = 45; // seconds: never make the visitor wait longer than this
+        $quotaHit = false;
+        $deadline = self::MAX_DURATION;
 
         for ($i = 0; $i < count($models) && $i < 8; $i++) {
             if (microtime(true) - $start > $deadline) {
@@ -90,14 +118,21 @@ class ChatQamhaController extends Controller
                 }
 
                 try {
-                    $res = Http::withHeaders(['Content-Type' => 'application/json'])
-                        ->connectTimeout(5)
-                        ->timeout(25)
-                        ->post($this->endpoint($model, $key), ['contents' => $contents]);
+                    $res = Http::withHeaders([
+                        'Content-Type' => 'application/json',
+                        // Key travels in a header, never in the query string, so it cannot
+                        // leak through proxies, access logs or exception messages.
+                        'x-goog-api-key' => $apiKey,
+                    ])
+                        ->connectTimeout(4)
+                        ->timeout(8)
+                        ->post($this->endpoint($model), ['contents' => $contents]);
                 } catch (\Throwable $e) {
-                    $lastError = $e->getMessage();
+                    // Covers connection failures, DNS errors and the 8s timeout.
+                    // Never log $e->getMessage(): it embeds the request URI and may leak secrets.
+                    $lastError = get_class($e);
                     $res = null;
-                    Log::error('Gemini API Error ['.$model.']: '.$lastError);
+                    Log::error('Gemini transport error ['.$model.']: '.$lastError);
 
                     if ($attempt < 2) {
                         Sleep::for(1)->seconds();
@@ -114,7 +149,7 @@ class ChatQamhaController extends Controller
 
                 $status = $res->status();
                 $lastBody = $res->body();
-                Log::error('Gemini API Error ['.$model.' / '.$status.']: '.$lastBody);
+                Log::error('Gemini API error ['.$model.' / '.$status.']: '.$this->sanitize($lastBody));
 
                 // Google tells us which model to use when the requested one is retired.
                 if ($status === 404 && preg_match('/models\/(gemini-[A-Za-z0-9.\-]+)/', $lastBody, $suggested)
@@ -124,6 +159,7 @@ class ChatQamhaController extends Controller
 
                 // Daily/minute quota exhausted → cool this model down and move to the next one.
                 if ($status === 429) {
+                    $quotaHit = true;
                     $this->coolDown($model, $lastBody);
 
                     break;
@@ -141,29 +177,44 @@ class ChatQamhaController extends Controller
         }
 
         if ($res === null || ! $res->successful()) {
-            Log::error('Gemini API Error: all model candidates failed. '.$lastBody.$lastError);
+            Log::error('Gemini: all model candidates failed.'.($quotaHit ? ' (quota exhausted)' : '').' '.$this->sanitize($lastBody).' '.$lastError);
 
-            return response()->json([
-                'reply' => self::ERROR_REPLY,
-                'error' => Str::limit($lastBody !== '' ? $lastBody : $lastError, 300),
-            ], 502);
+            return $this->gracefulFailure($quotaHit ? self::QUOTA_REPLY : self::ERROR_REPLY);
         }
 
         $replyText = $res->json('candidates.0.content.parts.0.text');
 
         if (blank($replyText)) {
-            Log::error($res->body());
+            Log::error('Gemini: empty candidates. '.$this->sanitize($res->body()));
 
-            return response()->json([
-                'reply' => self::ERROR_REPLY,
-                'error' => 'Empty candidates in Gemini response.',
-            ], 502);
+            return $this->gracefulFailure();
         }
 
         Cache::put(self::MODEL_CACHE_KEY, $model, now()->addHours(6));
         Cache::forget(self::COOL_PREFIX.$model);
 
         return response()->json(['reply' => trim($replyText)]);
+    }
+
+    /**
+     * Never fail silently and never blow up with a 500: the chat widget only knows
+     * how to render `reply`, and it must always receive one so the typing bubble stops.
+     * The detail is logged server-side, never returned to the public caller.
+     */
+    private function gracefulFailure(string $reply = self::ERROR_REPLY): JsonResponse
+    {
+        return response()->json(['reply' => $reply]);
+    }
+
+    /**
+     * Strip anything key-shaped (and cap the length) before an upstream payload reaches the log.
+     */
+    private function sanitize(string $body): string
+    {
+        $redacted = preg_replace('/AIza[A-Za-z0-9_\-]{5,}/', 'AIza***REDACTED***', $body) ?? $body;
+        $redacted = preg_replace('/(key=|x-goog-api-key"?\s*:\s*")[^&"\s]+/i', '${1}***', $redacted) ?? $redacted;
+
+        return Str::limit($redacted, 300);
     }
 
     /**
@@ -215,48 +266,17 @@ class ChatQamhaController extends Controller
         Log::warning('Gemini model ['.$model.'] cooled down for '.round($seconds / 60).' min (quota exhausted).');
     }
 
-    private function endpoint(string $model, string $key): string
+    private function endpoint(string $model): string
     {
-        return 'https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent?key='.rawurlencode($key);
+        return 'https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent';
     }
 
     /**
-     * Resolve the Gemini key: config first, then env(), then the literal .env file
-     * (a machine/user level GEMINI_API_KEY would otherwise shadow the .env value).
+     * The key is resolved strictly from config/env — never by parsing .env at runtime.
      */
-    private function resolveKey(): string
-    {
-        $key = trim((string) (config('services.gemini.key') ?: env('GEMINI_API_KEY')));
-
-        if ($this->isValidKey($key)) {
-            return $key;
-        }
-
-        $key = $this->keyFromDotEnvFile();
-
-        return $this->isValidKey($key) ? $key : '';
-    }
-
     private function isValidKey(string $key): bool
     {
         return $key !== '' && $key !== 'your_key_here' && preg_match('/^AIza[A-Za-z0-9_\-]{10,}$/', $key) === 1;
-    }
-
-    private function keyFromDotEnvFile(): string
-    {
-        $path = base_path('.env');
-
-        if (! is_file($path)) {
-            return '';
-        }
-
-        foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-            if (preg_match('/^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*$/', $line, $m)) {
-                return trim($m[1], " \t\"'");
-            }
-        }
-
-        return '';
     }
 
     /**

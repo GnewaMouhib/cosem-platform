@@ -25,6 +25,8 @@ Route::redirect('/varietes', '/cereales')->name('varietes.index');
 Route::get('/maladies', [DiseaseController::class, 'index'])->name('maladies.index');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::view('/mentions-legales', 'pages.mentions-legales')->name('mentions-legales');
+Route::view('/politique-de-confidentialite', 'pages.politique-confidentialite')->name('politique-confidentialite');
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {

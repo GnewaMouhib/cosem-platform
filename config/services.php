@@ -29,6 +29,11 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
     ],
 
+    'cosem' => [
+        'admin_password' => env('COSEM_ADMIN_PASSWORD'),
+        'admin_email' => env('COSEM_ADMIN_EMAIL', 'admin@cosem.tn'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

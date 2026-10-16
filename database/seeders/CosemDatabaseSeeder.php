@@ -24,15 +24,27 @@ class CosemDatabaseSeeder extends Seeder
 
     private function seedAdmin(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@cosem.tn'],
+        $password = (string) (env('COSEM_ADMIN_PASSWORD') ?: config('services.cosem.admin_password'));
+
+        if ($password === '' || mb_strlen($password) < 12) {
+            $this->command?->warn('Seed admin skipped: set COSEM_ADMIN_PASSWORD (12+ chars) in .env first.');
+
+            return;
+        }
+
+        $user = User::updateOrCreate(
+            ['email' => env('COSEM_ADMIN_EMAIL', 'admin@cosem.tn')],
             [
-                'name' => 'Administrateur COSEM',
-                'password' => 'COSEM@Admin2026!',
-                'role' => 'admin',
+                'name' => env('COSEM_ADMIN_NAME', 'Administrateur COSEM'),
+                'password' => $password,
                 'email_verified_at' => now(),
             ]
         );
+
+        // `role` is deliberately not mass assignable: only trusted code may set it.
+        $user->forceFill(['role' => 'admin'])->save();
+
+        $this->command?->info('Admin account ready for '.$user->email.'.');
     }
 
     private function seedYearAndStats(): void

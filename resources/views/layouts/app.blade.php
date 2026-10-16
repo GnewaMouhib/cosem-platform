@@ -247,8 +247,8 @@
             <div class="border-t border-emerald-900/80 pt-6 mt-10 flex flex-col md:flex-row items-center justify-between gap-4 pb-2">
                 <p class="text-xs text-slate-400">&copy; {{ date('Y') }} COSEM — Société Coopérative Centrale des Semences. Tous droits réservés.</p>
                 <div class="flex flex-wrap justify-center gap-6 text-xs">
-                    <a href="#" class="text-slate-300 hover:text-emerald-400 transition">Mentions légales</a>
-                    <a href="#" class="text-slate-300 hover:text-emerald-400 transition">Politique de confidentialité</a>
+                    <a href="{{ route('mentions-legales') }}" class="text-slate-300 hover:text-emerald-400 transition">Mentions légales</a>
+                    <a href="{{ route('politique-confidentialite') }}" class="text-slate-300 hover:text-emerald-400 transition">Politique de confidentialité</a>
                     <a href="{{ route('admin.login') }}" class="text-slate-300 hover:text-emerald-400 transition">Accès Administration</a>
                 </div>
             </div>
