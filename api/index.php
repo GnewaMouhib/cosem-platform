@@ -42,6 +42,18 @@ putenv('APP_STORAGE=' . $storagePath);
 $_ENV['APP_STORAGE'] = $storagePath;
 $_SERVER['APP_STORAGE'] = $storagePath;
 
+// Ensure Vite/asset URLs are relative to domain root, not http://localhost
+putenv('ASSET_URL=/');
+$_ENV['ASSET_URL'] = '/';
+$_SERVER['ASSET_URL'] = '/';
+
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && isset($_SERVER['HTTP_HOST'])) {
+    $currentUrl = $_SERVER['HTTP_X_FORWARDED_PROTO'] . '://' . $_SERVER['HTTP_HOST'];
+    putenv('APP_URL=' . $currentUrl);
+    $_ENV['APP_URL'] = $currentUrl;
+    $_SERVER['APP_URL'] = $currentUrl;
+}
+
 putenv('LOG_CHANNEL=stderr');
 $_ENV['LOG_CHANNEL'] = 'stderr';
 $_SERVER['LOG_CHANNEL'] = 'stderr';
