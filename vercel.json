@@ -31,8 +31,12 @@
     }
   ],
   "env": {
+    "APP_NAME": "COSEM Platform",
     "APP_ENV": "production",
     "APP_DEBUG": "false",
+    "APP_KEY": "base64:pJEj2iLs74knZNGRW419b8fo+/5MqUzdYBR8E3WZ9Ps=",
+    "DB_CONNECTION": "sqlite",
+    "DB_DATABASE": "/tmp/database.sqlite",
     "APP_CONFIG_CACHE": "/tmp/storage/framework/cache/config.php",
     "APP_EVENTS_CACHE": "/tmp/storage/framework/cache/events.php",
     "APP_PACKAGES_CACHE": "/tmp/storage/framework/cache/packages.php",

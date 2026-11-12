@@ -24,3 +24,4 @@ yarn-error.log
 /storage/framework/sessions
 /storage/framework/views
 /database/*.sqlite
+!/database/database.sqlite
