@@ -5,7 +5,8 @@
   "outputDirectory": "public",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.4"
+      "runtime": "vercel-php@0.7.4",
+      "includeFiles": "database/**"
     }
   },
   "routes": [
@@ -33,7 +34,7 @@
   "env": {
     "APP_NAME": "COSEM Platform",
     "APP_ENV": "production",
-    "APP_DEBUG": "true",
+    "APP_DEBUG": "false",
     "APP_KEY": "base64:pJEj2iLs74knZNGRW419b8fo+/5MqUzdYBR8E3WZ9Ps=",
     "DB_CONNECTION": "sqlite",
     "DB_DATABASE": "/tmp/database.sqlite",
