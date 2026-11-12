@@ -8,8 +8,10 @@ class DiseaseController extends Controller
 {
     public function index()
     {
-        $diseases = Disease::all();
+        $diseases = Disease::orderBy('name')->get();
+        $fongiques = $diseases->filter(fn ($d) => ! $d->isRavageur())->values();
+        $ravageurs = $diseases->filter(fn ($d) => $d->isRavageur())->values();
 
-        return view('pages.maladies', compact('diseases'));
+        return view('pages.maladies', compact('diseases', 'fongiques', 'ravageurs'));
     }
 }

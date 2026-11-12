@@ -104,7 +104,8 @@
             <div class="shrink-0">
                 @if($station?->image_path)
                     <img src="{{ asset($station->image_path) }}" alt="{{ $station->name }}"
-                         class="w-28 h-20 rounded-xl object-cover border border-emerald-200" id="imagePreview">
+                         class="w-28 h-20 rounded-xl object-cover border border-emerald-200" id="imagePreview"
+                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80';">
                 @else
                     <div id="imagePreview" class="w-28 h-20 rounded-xl bg-slate-50 border border-dashed border-emerald-300 flex items-center justify-center">
                         <i data-lucide="image" class="w-6 h-6 text-slate-300"></i>

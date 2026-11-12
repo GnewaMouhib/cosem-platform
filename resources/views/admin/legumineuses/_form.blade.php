@@ -66,7 +66,8 @@
         @error('image')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
         @if($pulse?->image_path)
             <div class="mt-3 flex items-center gap-3">
-                <img src="{{ asset($pulse->image_path) }}" alt="{{ $pulse->name }}" class="w-14 h-14 rounded-xl object-cover border border-emerald-100">
+                <img src="{{ asset($pulse->image_path) }}" alt="{{ $pulse->name }}" class="w-14 h-14 rounded-xl object-cover border border-emerald-100"
+                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=200&q=80';">
                 <p class="text-xs text-slate-400">Image actuelle — importer un fichier pour la remplacer.</p>
             </div>
         @endif

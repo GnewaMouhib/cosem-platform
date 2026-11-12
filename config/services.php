@@ -24,11 +24,6 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
-    ],
-
     'cosem' => [
         'admin_password' => env('COSEM_ADMIN_PASSWORD'),
         'admin_email' => env('COSEM_ADMIN_EMAIL', 'admin@cosem.tn'),

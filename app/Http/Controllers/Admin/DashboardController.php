@@ -15,10 +15,12 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $activeYear = Year::where('is_active', true)->first();
-        $stats = $activeYear?->annualStats()->first();
+        $years = Year::with('annualStats')->orderByDesc('harvest_year')->get();
+        $activeYear = $years->firstWhere('is_active', true) ?? $years->first();
+        $stats = $activeYear?->annualStats?->first();
 
         return view('admin.dashboard', [
+            'years' => $years,
             'activeYear' => $activeYear,
             'stats' => $stats,
             'cerealCount' => Cereal::count(),
@@ -27,7 +29,6 @@ class DashboardController extends Controller
             'diseaseCount' => Disease::count(),
             'unreadCount' => ContactsMessage::where('is_read', false)->count(),
             'latestMessages' => ContactsMessage::latest()->take(5)->get(),
-            'analytics' => Year::chartSeries(),
         ]);
     }
 }

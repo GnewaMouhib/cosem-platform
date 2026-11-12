@@ -8,7 +8,7 @@
         <form method="POST" action="{{ route('admin.legumineuses.update', $pulse) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
-            @include('admin.pulses._form')
+            @include('admin.legumineuses._form')
         </form>
     </div>
 @endsection

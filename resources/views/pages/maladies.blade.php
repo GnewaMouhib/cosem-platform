@@ -36,9 +36,12 @@
         ],
     ];
 
+    $fongiques = $fongiques ?? $diseases->filter(fn ($d) => ! $d->isRavageur())->values();
+    $ravageurs = $ravageurs ?? $diseases->filter(fn ($d) => $d->isRavageur())->values();
+
     $tabs = [
-        'fongiques' => ['label' => 'Maladies fongiques', 'count' => $diseases->count()],
-        'ravageurs' => ['label' => 'Ravageurs', 'count' => 0],
+        'fongiques' => ['label' => 'Maladies fongiques', 'count' => $fongiques->count()],
+        'ravageurs' => ['label' => 'Ravageurs', 'count' => $ravageurs->count()],
         'semences'  => ['label' => 'Traitement de semences', 'count' => null],
     ];
 @endphp
@@ -58,12 +61,16 @@
 
             <div class="flex flex-wrap gap-3 mt-6">
                 <span class="badge bg-white border border-emerald-200 text-forest-700">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                    {{ $fongiques->count() }} maladies fongiques
+                </span>
+                <span class="badge bg-white border border-amber-200 text-amber-800">
                     <i data-lucide="bug" class="w-3.5 h-3.5"></i>
-                    {{ $diseases->count() }} maladies référencées
+                    {{ $ravageurs->count() }} ravageurs référencés
                 </span>
                 <span class="badge bg-white border border-emerald-200 text-forest-700">
                     <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>
-                    Protocoles INGC
+                    Protocoles INGC &amp; COSEM
                 </span>
             </div>
         </div>
@@ -100,7 +107,7 @@
             <div x-show="tab === 'fongiques'" x-cloak>
                 <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                    @foreach($diseases as $index => $disease)
+                    @foreach($fongiques as $index => $disease)
                         @php
                             $protocol = $protocols[$disease->name] ?? null;
                         @endphp
@@ -146,7 +153,7 @@
                             <div class="p-5 pb-4">
                                 <div class="flex items-start gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
-                                        <i data-lucide="bug" class="w-5 h-5 text-red-500"></i>
+                                        <i data-lucide="shield-alert" class="w-5 h-5 text-red-500"></i>
                                     </div>
                                     <div class="min-w-0">
                                         <h2 class="font-display text-lg font-bold text-ink leading-tight">{{ $disease->name }}</h2>
@@ -159,15 +166,15 @@
 
                             {{-- Expandable details --}}
                             <div class="px-5 pb-5 mt-auto">
-                                <button @click="open = open === {{ $index }} ? null : {{ $index }}"
+                                <button @click="open = open === 'fon-{{ $index }}' ? null : 'fon-{{ $index }}'"
                                         class="w-full flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-xl bg-slate-50 border border-emerald-100 hover:border-emerald-200 transition text-sm font-bold text-forest-700">
-                                    <span x-text="open === {{ $index }} ? 'Masquer le détail' : 'Afficher les détails'">Afficher les détails</span>
-                                    <span class="inline-block transition-transform duration-300" :class="open === {{ $index }} ? 'rotate-180' : ''">
+                                    <span x-text="open === 'fon-{{ $index }}' ? 'Masquer le détail' : 'Afficher les détails'">Afficher les détails</span>
+                                    <span class="inline-block transition-transform duration-300" :class="open === 'fon-{{ $index }}' ? 'rotate-180' : ''">
                                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                                     </span>
                                 </button>
 
-                                <div x-show="open === {{ $index }}" x-cloak
+                                <div x-show="open === 'fon-{{ $index }}'" x-cloak
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="opacity-0 -translate-y-2"
                                      x-transition:enter-end="opacity-100 translate-y-0"
@@ -267,17 +274,155 @@
                 </div>
             </div>
 
-            {{-- Tab 2 : Ravageurs (empty state) --}}
+            {{-- Tab 2 : Ravageurs (3 fiches scientifiques complètes) --}}
             <div x-show="tab === 'ravageurs'" x-cloak>
-                <div class="card p-12 text-center">
-                    <div class="w-16 h-16 rounded-2xl bg-slate-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="bug" class="w-7 h-7 text-slate-300"></i>
-                    </div>
-                    <h3 class="font-display text-xl font-bold text-ink mb-1">Référentiel des ravageurs en cours de constitution.</h3>
-                    <p class="text-sm text-slate-400 max-w-md mx-auto">
-                        Les protocoles de lutte intégrée contre les ravageurs des céréales (cécidomyie, puceron jaune, pyrale…)
-                        seront publiés prochainement selon les recommandations officielles de l'INGC.
-                    </p>
+                <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    @forelse($ravageurs as $index => $pest)
+                        <article class="card overflow-hidden card-hover animate-fade-in-up flex flex-col"
+                                 style="animation-delay: {{ $index * 0.08 }}s">
+
+                            {{-- Documentary preview --}}
+                            <div class="relative h-44 bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-50 flex items-center justify-center overflow-hidden border-b border-amber-200">
+                                @if($pest->image_path)
+                                    <img src="{{ asset($pest->image_path) }}" alt="Symptômes de {{ $pest->name }}"
+                                         loading="lazy"
+                                         class="absolute inset-0 w-full h-full object-cover"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=800&q=80';">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent"></div>
+                                @else
+                                    <div class="absolute inset-0 grain-overlay opacity-30"></div>
+                                    <div class="relative text-center px-6">
+                                        <div class="w-16 h-16 rounded-full bg-white/85 border border-amber-300 flex items-center justify-center mx-auto mb-3 shadow-soft">
+                                            <i data-lucide="bug" class="w-8 h-8 text-amber-600"></i>
+                                        </div>
+                                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Ravageur des grandes cultures</p>
+                                        <p class="text-[10px] text-amber-600/80 mt-0.5">Surveillance &amp; Seuil d'intervention</p>
+                                    </div>
+                                @endif
+                                <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                                    @if($pest->target_crops)
+                                        @foreach(explode(',', $pest->target_crops) as $cropName)
+                                            <span class="badge bg-white/95 text-amber-900 font-bold">{{ trim($cropName) }}</span>
+                                        @endforeach
+                                    @elseif($pest->affected_crops)
+                                        @foreach($pest->affected_crops as $crop)
+                                            <span class="badge bg-white/95 text-amber-900 font-bold">{{ ucwords(str_replace('_', ' ', $crop)) }}</span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                <div class="absolute bottom-3 right-3 flex flex-wrap gap-1.5 justify-end">
+                                    <span class="badge bg-amber-500/95 text-white font-bold">
+                                        <i data-lucide="crosshair" class="w-3 h-3"></i> Lutte Intégrée
+                                    </span>
+                                    <span class="badge bg-red-100/95 text-red-700 font-bold">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3"></i> Ravageur
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Identity --}}
+                            <div class="p-5 pb-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                                        <i data-lucide="bug" class="w-5 h-5 text-amber-600"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h2 class="font-display text-lg font-bold text-ink leading-tight">{{ $pest->name }}</h2>
+                                        @if($pest->scientific_name)
+                                            <p class="text-xs text-amber-700 italic font-medium">{{ $pest->scientific_name }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Expandable details --}}
+                            <div class="px-5 pb-5 mt-auto">
+                                <button @click="open = open === 'rav-{{ $index }}' ? null : 'rav-{{ $index }}'"
+                                        class="w-full flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-xl bg-amber-50/70 border border-amber-200 hover:border-amber-300 transition text-sm font-bold text-amber-800">
+                                    <span x-text="open === 'rav-{{ $index }}' ? 'Masquer le détail' : 'Afficher les détails techniques'">Afficher les détails techniques</span>
+                                    <span class="inline-block transition-transform duration-300" :class="open === 'rav-{{ $index }}' ? 'rotate-180' : ''">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </span>
+                                </button>
+
+                                <div x-show="open === 'rav-{{ $index }}'" x-cloak
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 -translate-y-2"
+                                     x-transition:enter-end="opacity-100 translate-y-0"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="pt-4 space-y-4"
+                                     style="display: none">
+
+                                    {{-- Period of risk / activity --}}
+                                    @if($pest->period)
+                                        <div class="rounded-xl bg-amber-50/80 border border-amber-200 p-3.5">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white border border-amber-200 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1.5">
+                                                <i data-lucide="calendar-days" class="w-3 h-3 text-amber-600"></i> Période à risque
+                                            </span>
+                                            <p class="text-sm text-amber-900 leading-relaxed font-semibold">{{ $pest->period }}</p>
+                                        </div>
+                                    @endif
+
+                                    {{-- Symptoms --}}
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1.5">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-[10px] font-bold uppercase tracking-wider text-red-700">
+                                                <i data-lucide="eye" class="w-3 h-3"></i> Symptômes visibles au champ
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-slate-600 leading-relaxed">{{ $pest->symptoms }}</p>
+                                    </div>
+
+                                    {{-- Control methods / Thresholds --}}
+                                    @if($pest->control_methods || $pest->chemical_treatment)
+                                        <div class="rounded-xl bg-emerald-50/80 border border-emerald-200 p-3.5">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white border border-emerald-200 text-[10px] font-bold uppercase tracking-wider text-forest-700 mb-1.5">
+                                                <i data-lucide="shield-check" class="w-3 h-3 text-forest-600"></i> Méthodes de lutte &amp; Seuils d'intervention
+                                            </span>
+                                            <p class="text-sm text-forest-900 leading-relaxed">{{ $pest->control_methods ?: $pest->chemical_treatment }}</p>
+                                        </div>
+                                    @endif
+
+                                    {{-- Target crops --}}
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1.5">
+                                            <i data-lucide="wheat" class="w-3.5 h-3.5 text-forest-600"></i>
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-forest-600">Céréales cibles</span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            @if($pest->target_crops)
+                                                @foreach(explode(',', $pest->target_crops) as $cropName)
+                                                    <span class="badge bg-emerald-50 border border-emerald-200 text-forest-700 font-semibold">{{ trim($cropName) }}</span>
+                                                @endforeach
+                                            @elseif($pest->affected_crops)
+                                                @foreach($pest->affected_crops as $crop)
+                                                    <span class="badge bg-emerald-50 border border-emerald-200 text-forest-700 font-semibold">{{ ucwords(str_replace('_', ' ', $crop)) }}</span>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- Cultural practices / Prophylaxis --}}
+                                    @if($pest->cultural_practices)
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1.5">
+                                                <i data-lucide="leaf" class="w-3.5 h-3.5 text-forest-600"></i>
+                                                <span class="text-[10px] font-bold uppercase tracking-wider text-forest-600">Pratiques agronomiques préventives</span>
+                                            </div>
+                                            <p class="text-sm text-slate-500 leading-relaxed">{{ $pest->cultural_practices }}</p>
+                                        </div>
+                                    @endif
+
+                                </div>
+                            </div>
+                        </article>
+                    @empty
+                        <div class="card p-12 text-center md:col-span-2 xl:col-span-3">
+                            <p class="text-sm text-slate-400">Aucun ravageur répertorié actuellement.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
 

@@ -169,12 +169,6 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('cereales.index') }}#calculateur" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
-                            <svg class="w-3.5 h-3.5 text-harvest-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M15 17h.01M5 7h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/></svg>
-                            Simulateur de dosage de semis
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ route('maladies.index') }}" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
                             <svg class="w-3.5 h-3.5 text-harvest-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             Guide de protection phytosanitaire
@@ -185,22 +179,47 @@
 
             {{-- Column 3: Réseau Territorial --}}
             <div>
+                @php
+                    // These three links must survive an admin creating or deleting a station,
+                    // so the anchors are resolved by name instead of hardcoded ids. A failure
+                    // here must never take the page down: the links degrade to the index.
+                    $stationIds = rescue(
+                        fn () => \Illuminate\Support\Facades\Cache::remember(
+                            'layout.station_ids',
+                            3600,
+                            fn () => \App\Models\Station::query()->orderBy('id')->pluck('name', 'id')
+                        ),
+                        collect(),
+                        false
+                    );
+                    $stationUrl = function (?string $needle) use ($stationIds) {
+                        // first() hands the closure the value, unlike search() which hands it the key
+                        $match = $stationIds->first(
+                            fn ($name) => \Illuminate\Support\Str::contains(
+                                \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii((string) $name)),
+                                \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($needle))
+                            )
+                        );
+
+                        return route('stations.index').($match ? '#station-'.$stationIds->search($match) : '');
+                    };
+                @endphp
                 <h3 class="font-display text-base font-bold mb-5 text-white">Réseau Territorial</h3>
                 <ul class="space-y-3 text-sm">
                     <li>
-                        <a href="{{ route('stations.index') }}#station-1" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
+                        <a href="{{ $stationUrl('manouba') }}" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
                             <svg class="w-3.5 h-3.5 text-harvest-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>
                             Station centrale de conditionnement <span class="text-slate-500">(Manouba)</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('stations.index') }}#station-2" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
+                        <a href="{{ $stationUrl('tebourba') }}" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
                             <svg class="w-3.5 h-3.5 text-harvest-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>
                             Station de triage et traitement <span class="text-slate-500">(Tébourba)</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('stations.index') }}#station-3" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
+                        <a href="{{ $stationUrl('el krib') }}" class="inline-flex items-center gap-2.5 text-slate-300 hover:text-emerald-400 transition">
                             <svg class="w-3.5 h-3.5 text-harvest-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>
                             Dépôts de distribution régionaux
                         </a>
@@ -254,9 +273,6 @@
             </div>
         </div>
     </footer>
-
-    {{-- ==================== 9am7a CHATBOT ==================== --}}
-    @include('partials.chat-qamha')
 
     {{-- ==================== SCRIPTS ==================== --}}
     {{-- Alpine.js --}}

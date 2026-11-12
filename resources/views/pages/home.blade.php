@@ -175,41 +175,73 @@
                             </div>
                         @endif
 
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i data-lucide="wheat" class="w-4 h-4 text-forest-600"></i>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-forest-600">Blé Dur</span>
+                        @php
+                            $cTotal = (float) (($stats?->durum_wheat_qx ?? 215000) + ($stats?->soft_wheat_qx ?? 8000) + ($stats?->barley_qx ?? 7000) + ($stats?->oats_qx ?? 3000));
+                            $pTotal = (float) (($stats?->feves_qx ?? 850) + ($stats?->pois_chiches_qx ?? 650) + ($stats?->feveroles_qx ?? 350) + ($stats?->lentilles_qx ?? 150));
+                            if ($pTotal <= 0 && ($stats?->pulses_qx ?? 0) > 0) $pTotal = (float) $stats->pulses_qx;
+                        @endphp
+                        {{-- Compteurs supérieurs dynamiques --}}
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                            <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                                <div class="flex items-center gap-1.5 mb-1 text-forest-700">
+                                    <i data-lucide="wheat" class="w-4 h-4"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Total Céréales</span>
                                 </div>
-                                <div class="font-display text-3xl font-bold text-ink"><span id="cf-durum" data-counter="{{ (int) round(($stats->durum_wheat_qx ?? 215000) / 1000) }}">0</span>k</div>
-                                <div class="text-xs text-slate-400 mt-1">Quintaux produits</div>
+                                <div class="font-display text-2xl font-bold text-ink"><span id="cf-cereals-total" data-counter="{{ (int) round($cTotal / 1000) }}">0</span>k <span class="text-xs font-sans text-slate-400 font-semibold">QX</span></div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">Collecte totale</div>
                             </div>
-                            <div class="rounded-2xl bg-harvest-50 border border-yellow-100 p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i data-lucide="maximize-2" class="w-4 h-4 text-harvest-500"></i>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-harvest-500">Superficie</span>
+                            <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+                                <div class="flex items-center gap-1.5 mb-1 text-harvest-700">
+                                    <i data-lucide="leaf" class="w-4 h-4"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Total Légumes</span>
                                 </div>
-                                <div class="font-display text-3xl font-bold text-ink"><span id="cf-superficie" data-counter="{{ (int) round(($stats->total_hectares ?? 11000) / 1000) }}">0</span>k</div>
-                                <div class="text-xs text-slate-400 mt-1">Hectares semés</div>
+                                <div class="font-display text-2xl font-bold text-ink"><span id="cf-pulses-total" data-counter="{{ (int) round($pTotal) }}">0</span> <span class="text-xs font-sans text-slate-400 font-semibold">QX</span></div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">Production certifiée</div>
+                            </div>
+                            <div class="rounded-2xl bg-sky-50 border border-sky-100 p-4 col-span-2 sm:col-span-1">
+                                <div class="flex items-center gap-1.5 mb-1 text-sky-700">
+                                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Superficie</span>
+                                </div>
+                                <div class="font-display text-2xl font-bold text-ink"><span id="cf-superficie" data-counter="{{ (int) round(($stats?->total_hectares ?? 11000) / 1000) }}">0</span>k <span class="text-xs font-sans text-slate-400 font-semibold">Ha</span></div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">Taux certif. : <strong id="cf-cert" class="text-forest-700">{{ rtrim(rtrim(number_format((float) ($stats?->certified_seed_pct ?? 85), 1, ',', ' '), '0'), ',') }}%</strong></div>
                             </div>
                         </div>
 
-                        <div class="relative h-[220px] mb-6">
-                            <canvas id="distributionChart"></canvas>
-                        </div>
+                        {{-- Deux Donuts distincts : Céréales & Légumineuses --}}
+                        <div class="grid md:grid-cols-2 gap-5 mb-2">
+                            {{-- Donut 1 : Céréales --}}
+                            <div class="bg-slate-50/70 rounded-2xl p-4 border border-emerald-100 flex flex-col">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-forest-800 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-forest-600"></span> Répartition Céréales
+                                    </h4>
+                                    <span class="text-[10px] font-extrabold text-forest-700 px-2 py-0.5 rounded-full bg-emerald-100/70" id="cf-durum-badge">{{ (int) round(($stats?->durum_wheat_qx ?? 215000) / 1000) }}k QX Blé Dur</span>
+                                </div>
+                                <div class="relative h-[200px] w-full">
+                                    <canvas id="cerealsDonutChart"></canvas>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-slate-200/60 text-[11px] text-slate-500">
+                                    <div>Blé Tendre : <strong id="cf-soft" class="text-ink font-bold">{{ number_format($stats?->soft_wheat_qx ?? 8000, 0, ',', ' ') }}</strong> QX</div>
+                                    <div>Orge : <strong id="cf-barley" class="text-ink font-bold">{{ number_format($stats?->barley_qx ?? 7000, 0, ',', ' ') }}</strong> QX</div>
+                                </div>
+                            </div>
 
-                        <div class="grid grid-cols-3 gap-3 text-center">
-                            <div class="rounded-xl border border-emerald-100 py-3">
-                                <div class="font-bold text-ink text-lg" id="cf-soft" data-counter="{{ (int) round($stats->soft_wheat_qx ?? 8000) }}">0</div>
-                                <div class="text-[10px] font-bold uppercase text-slate-400">QX Blé Tendre</div>
-                            </div>
-                            <div class="rounded-xl border border-emerald-100 py-3">
-                                <div class="font-bold text-ink text-lg" id="cf-barley" data-counter="{{ (int) round($stats->barley_qx ?? 7000) }}">0</div>
-                                <div class="text-[10px] font-bold uppercase text-slate-400">QX Orge</div>
-                            </div>
-                            <div class="rounded-xl border border-emerald-100 py-3">
-                                <div class="font-bold text-ink text-lg" id="cf-pulses" data-counter="{{ (int) round($stats->pulses_qx ?? 2000) }}">0</div>
-                                <div class="text-[10px] font-bold uppercase text-slate-400">QX Légumineuses</div>
+                            {{-- Donut 2 : Légumineuses --}}
+                            <div class="bg-slate-50/70 rounded-2xl p-4 border border-amber-100 flex flex-col">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-harvest-800 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Répartition Légumineuses
+                                    </h4>
+                                    <span class="text-[10px] font-extrabold text-harvest-800 px-2 py-0.5 rounded-full bg-amber-100/70" id="cf-pulses-badge">{{ number_format($pTotal, 0, ',', ' ') }} QX Total</span>
+                                </div>
+                                <div class="relative h-[200px] w-full">
+                                    <canvas id="pulsesDonutChart"></canvas>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-slate-200/60 text-[11px] text-slate-500">
+                                    <div>Fèves : <strong id="cf-feves" class="text-ink font-bold">{{ number_format($stats?->feves_qx ?? 850, 0, ',', ' ') }}</strong> QX</div>
+                                    <div>Pois chiches : <strong id="cf-chickpeas" class="text-ink font-bold">{{ number_format($stats?->pois_chiches_qx ?? 650, 0, ',', ' ') }}</strong> QX</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -237,9 +269,12 @@
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @php
                     $stationFallbacks = [
-                        'Station de Conditionnement de Manouba' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
-                        'Station de Conditionnement de Tebourba' => 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&w=800&q=80',
-                        'Entrepôts SNCFT' => 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80',
+                        'Siège & Complexe Industriel Principal - Manouba' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+                        'Plateforme de Stockage Stratégique - Manouba' => 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80',
+                        "Laboratoire Central d'Analyses & Qualité - Manouba" => 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&w=800&q=80',
+                        'Station de Conditionnement Tébourba 1' => 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&w=800&q=80',
+                        'Station Spécialisée Tébourba 2 (Pôle Légumineuses)' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+                        'Centre de Stockage Régional - El Krib' => 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80',
                     ];
                     $stationDefaultImage = 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80';
                 @endphp
@@ -313,7 +348,7 @@
 
 @push('scripts')
 <script>
-    /* ---------- Campaign switcher (Alpine) : swaps key figures + donut without reload ---------- */
+    /* ---------- Campaign switcher (Alpine) : swaps key figures + donuts without reload ---------- */
     function campaignSwitcher(campaigns, currentId) {
         return {
             campaigns: campaigns || [],
@@ -339,15 +374,40 @@
                     if (window.__animateCounter) window.__animateCounter(el);
                     else el.textContent = Number(value).toLocaleString('fr-FR');
                 };
-                setCounter('cf-durum', c.durum_k);
-                setCounter('cf-superficie', c.hectares_k);
-                setCounter('cf-soft', c.soft);
-                setCounter('cf-barley', c.barley);
-                setCounter('cf-pulses', c.pulses);
 
-                if (window.__distributionChart) {
-                    window.__distributionChart.data.datasets[0].data = c.chart;
-                    window.__distributionChart.update();
+                setCounter('cf-cereals-total', c.cereals_k);
+                setCounter('cf-pulses-total', c.pulses_total);
+                setCounter('cf-superficie', c.hectares_k);
+
+                const certEl = document.getElementById('cf-cert');
+                if (certEl) certEl.textContent = c.cert_pct + '%';
+
+                const durumBadge = document.getElementById('cf-durum-badge');
+                if (durumBadge) durumBadge.textContent = Math.round(c.durum / 1000) + 'k QX Blé Dur';
+
+                const pulsesBadge = document.getElementById('cf-pulses-badge');
+                if (pulsesBadge) pulsesBadge.textContent = Number(c.pulses_total).toLocaleString('fr-FR') + ' QX Total';
+
+                const softEl = document.getElementById('cf-soft');
+                if (softEl) softEl.textContent = Number(c.soft).toLocaleString('fr-FR');
+
+                const barleyEl = document.getElementById('cf-barley');
+                if (barleyEl) barleyEl.textContent = Number(c.barley).toLocaleString('fr-FR');
+
+                const fevesEl = document.getElementById('cf-feves');
+                if (fevesEl) fevesEl.textContent = Number(c.feves).toLocaleString('fr-FR');
+
+                const chickpeasEl = document.getElementById('cf-chickpeas');
+                if (chickpeasEl) chickpeasEl.textContent = Number(c.chickpeas).toLocaleString('fr-FR');
+
+                if (window.__cerealsChart) {
+                    window.__cerealsChart.data.datasets[0].data = c.cereals_chart;
+                    window.__cerealsChart.update();
+                }
+
+                if (window.__pulsesChart) {
+                    window.__pulsesChart.data.datasets[0].data = c.pulses_chart;
+                    window.__pulsesChart.update();
                 }
 
                 try {
@@ -385,53 +445,115 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-counter]').forEach(el => counterObserver.observe(el));
     window.__animateCounter = animateCounter;
 
-    /* ---------- Chart.js ---------- */
-    const chartCanvas = document.getElementById('distributionChart');
-    if (chartCanvas) {
-        const stat = @json($stats ?? new \stdClass());
-        window.__distributionChart = new Chart(chartCanvas, {
+    /* ---------- Chart.js : 2 Donuts (Céréales & Légumineuses) ---------- */
+    @php
+        $initCereals = [
+            (float) ($stats->durum_wheat_qx ?? 215000),
+            (float) ($stats->soft_wheat_qx ?? 8000),
+            (float) ($stats->barley_qx ?? 7000),
+            (float) ($stats->oats_qx ?? 3000),
+        ];
+        $initFeves = (float) ($stats?->feves_qx ?? 850);
+        $initChickpeas = (float) ($stats?->pois_chiches_qx ?? 650);
+        $initFeveroles = (float) ($stats?->feveroles_qx ?? 350);
+        $initLentilles = (float) ($stats?->lentilles_qx ?? 150);
+        $sumPulses = $initFeves + $initChickpeas + $initFeveroles + $initLentilles;
+        if ($sumPulses <= 0 && ($stats?->pulses_qx ?? 0) > 0) {
+            $pTot = (float) $stats->pulses_qx;
+            $initFeves = round($pTot * 0.425, 2);
+            $initChickpeas = round($pTot * 0.325, 2);
+            $initFeveroles = round($pTot * 0.175, 2);
+            $initLentilles = round($pTot - ($initFeves + $initChickpeas + $initFeveroles), 2);
+        }
+        $initPulses = [$initFeves, $initChickpeas, $initFeveroles, $initLentilles];
+    @endphp
+
+    const cerealsCanvas = document.getElementById('cerealsDonutChart');
+    if (cerealsCanvas) {
+        window.__cerealsChart = new Chart(cerealsCanvas, {
             type: 'doughnut',
             data: {
-                labels: ['Blé Dur', 'Blé Tendre', 'Orge', 'Avoine', 'Légumineuses'],
+                labels: ['Blé Dur', 'Blé Tendre', 'Orge', 'Avoine'],
                 datasets: [{
-                    data: [
-                        parseFloat(stat.durum_wheat_qx || 215000),
-                        parseFloat(stat.soft_wheat_qx || 8000),
-                        parseFloat(stat.barley_qx || 7000),
-                        parseFloat(stat.oats_qx || 3000),
-                        parseFloat(stat.pulses_qx || 2000),
-                    ],
-                    backgroundColor: ['#166534', '#15803D', '#EAB308', '#CA8A04', '#86EFAC'],
+                    data: @json($initCereals),
+                    backgroundColor: ['#166534', '#10B981', '#F59E0B', '#D97706'],
                     borderWidth: 3,
                     borderColor: '#FFFFFF',
-                    hoverOffset: 8,
+                    hoverOffset: 6,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '64%',
+                cutout: '66%',
                 plugins: {
                     legend: {
                         position: 'right',
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            padding: 14,
+                            padding: 10,
                             font: { family: 'Inter', size: 11, weight: '600' },
                             color: '#64748B',
                         }
                     },
                     tooltip: {
                         backgroundColor: '#0F172A',
-                        padding: 12,
-                        cornerRadius: 10,
+                        padding: 10,
+                        cornerRadius: 8,
                         titleFont: { family: 'Inter', weight: '700' },
                         bodyFont: { family: 'Inter' },
-                        callbacks: { label: (c) => ' ' + c.parsed.toLocaleString('fr-FR') + ' QX' }
+                        callbacks: {
+                            label: (c) => ' ' + c.label + ' : ' + Number(c.parsed).toLocaleString('fr-FR') + ' QX'
+                        }
                     }
                 },
-                animation: { animateRotate: true, duration: 1300, easing: 'easeOutQuart' }
+                animation: { animateRotate: true, duration: 1200, easing: 'easeOutQuart' }
+            }
+        });
+    }
+
+    const pulsesCanvas = document.getElementById('pulsesDonutChart');
+    if (pulsesCanvas) {
+        window.__pulsesChart = new Chart(pulsesCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Fèves', 'Pois chiches', 'Féveroles', 'Lentilles'],
+                datasets: [{
+                    data: @json($initPulses),
+                    backgroundColor: ['#B45309', '#F59E0B', '#0D9488', '#34D399'],
+                    borderWidth: 3,
+                    borderColor: '#FFFFFF',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '66%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 10,
+                            font: { family: 'Inter', size: 11, weight: '600' },
+                            color: '#64748B',
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0F172A',
+                        padding: 10,
+                        cornerRadius: 8,
+                        titleFont: { family: 'Inter', weight: '700' },
+                        bodyFont: { family: 'Inter' },
+                        callbacks: {
+                            label: (c) => ' ' + c.label + ' : ' + Number(c.parsed).toLocaleString('fr-FR') + ' QX'
+                        }
+                    }
+                },
+                animation: { animateRotate: true, duration: 1200, easing: 'easeOutQuart' }
             }
         });
     }

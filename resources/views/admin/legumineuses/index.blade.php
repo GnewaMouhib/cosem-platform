@@ -30,7 +30,8 @@
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     @if($pulse->image_path)
-                                        <img src="{{ asset($pulse->image_path) }}" alt="{{ $pulse->name }}" class="w-9 h-9 rounded-lg object-cover border border-emerald-100">
+                                        <img src="{{ asset($pulse->image_path) }}" alt="{{ $pulse->name }}" class="w-9 h-9 rounded-lg object-cover border border-emerald-100"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=200&q=80';">
                                     @else
                                         <span class="w-9 h-9 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center">
                                             <i data-lucide="leaf" class="w-4 h-4 text-harvest-500"></i>

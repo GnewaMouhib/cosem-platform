@@ -20,6 +20,7 @@ class CosemDatabaseSeeder extends Seeder
         $this->seedCereals();
         $this->seedPulses();
         $this->seedDiseases();
+        $this->call(MaladieSeeder::class);
     }
 
     private function seedAdmin(): void
@@ -79,54 +80,100 @@ class CosemDatabaseSeeder extends Seeder
 
     private function seedStations(): void
     {
+        // The network is fully replaced on every run: the previous 3 generic sites no
+        // longer exist, and updateOrCreate() keyed on the name would leave them behind
+        // as duplicates rather than replacing them. Nothing references stations by
+        // foreign key, so truncating is safe and resets the id sequence.
         $stations = [
             [
-                'name' => 'Station de Conditionnement de Manouba',
+                'name' => 'Siège & Complexe Industriel Principal - Manouba',
                 'type' => 'conditioning_station',
+                'badge' => 'Siège & Traitement Industriel',
                 'city' => 'Manouba',
                 'governorate' => 'Manouba',
-                'latitude' => 36.8081,
-                'longitude' => 10.0972,
-                'capacity' => 40000,
-                'surface' => null,
-                'description' => 'Station de conditionnement de semences créée en 1955, agrandie en 1984 avec 1955 et 1984 lignes de conditionnement. Capacité de stockage de 40000 QX de semences certifiées.',
-                'images' => null,
-                'installation_year' => 1955,
+                'capacity' => 45000,
+                'installation_year' => 1951,
+                'description' => 'Siège administratif et unité industrielle majeure. Traitement phytosanitaire de pointe, triage certifié et conditionnement à grande échelle.',
+                'latitude' => 36.8080,
+                'longitude' => 10.0970,
             ],
             [
-                'name' => 'Station de Conditionnement de Tebourba',
+                'name' => 'Plateforme de Stockage Stratégique - Manouba',
+                'type' => 'storage_center',
+                'badge' => 'Stockage Stratégique',
+                'city' => 'Manouba',
+                'governorate' => 'Manouba',
+                'capacity' => 30000,
+                'installation_year' => 1984,
+                'description' => 'Site indépendant dédié à la conservation et au stockage stratégique des stocks régulateurs de semences certifiées.',
+                'latitude' => 36.8120,
+                'longitude' => 10.0910,
+            ],
+            [
+                'name' => "Laboratoire Central d'Analyses & Qualité - Manouba",
+                'type' => 'central_lab',
+                'badge' => 'Laboratoire & Contrôle Qualité',
+                'city' => 'Manouba',
+                'governorate' => 'Manouba',
+                'capacity' => null,
+                'installation_year' => 1995,
+                'description' => 'Pôle scientifique centralisé. Réception et analyse des échantillons de toutes les variétés en provenance de l\'ensemble des centres (tests de faculté germinative, pureté spécifique et contrôle variétal).',
+                'latitude' => 36.8105,
+                'longitude' => 10.0940,
+            ],
+            [
+                'name' => 'Station de Conditionnement Tébourba 1',
                 'type' => 'conditioning_station',
-                'city' => 'Tebourba',
-                'governorate' => 'Bizerte',
-                'latitude' => 37.1667,
-                'longitude' => 10.1000,
-                'capacity' => null,
-                'surface' => null,
-                'description' => 'Station de conditionnement installée en 2018 avec une capacité de traitement de 10 tonnes/heure.',
-                'images' => null,
-                'installation_year' => 2018,
+                'badge' => 'Triage & Traitement Céréales',
+                'city' => 'Tébourba',
+                'governorate' => 'Manouba',
+                'capacity' => 35000,
+                'installation_year' => 1978,
+                'description' => 'Unité de criblage, calibrage et traitement fongicide pour les variétés de céréales sélectionnées.',
+                'latitude' => 36.8290,
+                'longitude' => 9.8430,
             ],
             [
-                'name' => 'Entrepôts SNCFT',
-                'type' => 'warehouse',
-                'city' => 'Tunis',
-                'governorate' => 'Tunis',
-                'latitude' => 36.8065,
-                'longitude' => 10.1815,
-                'capacity' => null,
-                'surface' => 2873,
-                'description' => 'Entrepôts de stockage de semences d\'une surface totale de 2873 m², utilisés pour le stockage et la logistique des semences certifiées.',
-                'images' => null,
-                'installation_year' => null,
+                'name' => 'Station Spécialisée Tébourba 2 (Pôle Légumineuses)',
+                'type' => 'specialized_station',
+                'badge' => 'Spécialité Légumineuses',
+                'city' => 'Tébourba',
+                'governorate' => 'Manouba',
+                'capacity' => 20000,
+                'installation_year' => 2012,
+                'description' => 'Unité spécialisée dans la réception, le traitement et le conditionnement des semences de légumineuses alimentaires (fèves, pois chiches) avec réserve céréalière.',
+                'latitude' => 36.8340,
+                'longitude' => 9.8510,
+            ],
+            [
+                'name' => 'Centre de Stockage Régional - El Krib',
+                'type' => 'regional_depot',
+                'badge' => 'Stockage Régional',
+                'city' => 'El Krib',
+                'governorate' => 'Siliana',
+                'capacity' => 25000,
+                'installation_year' => 1990,
+                'description' => 'Plateforme de collecte et de stockage régional de grande capacité assurant la couverture du nord-ouest.',
+                'latitude' => 36.3280,
+                'longitude' => 9.1410,
             ],
         ];
 
-        foreach ($stations as $station) {
-            Station::updateOrCreate(
-                ['name' => $station['name']],
-                $station
-            );
+        // Common columns every record carries; keeps the inserts explicit rather than
+        // inheriting columns the payload deliberately leaves null.
+        foreach ($stations as &$station) {
+            $station += [
+                'surface' => null,
+                'images' => null,
+                'image_path' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
+        unset($station);
+
+        Station::truncate();
+        Station::insert($stations);
     }
 
     private function seedCereals(): void
@@ -202,10 +249,53 @@ class CosemDatabaseSeeder extends Seeder
             [
                 'name' => 'Fusariose',
                 'scientific_name' => 'Fusarium culmorum',
+                'category' => 'maladie',
+                'target_crops' => 'Blé dur, Blé tendre, Orge, Triticale',
                 'affected_crops' => ['ble_dur', 'ble_tendre', 'orge', 'triticale'],
+                'period' => 'Floraison à maturation',
                 'symptoms' => 'Pourriture rose du collet et des épis, graines légères et déscolorees.',
+                'control_methods' => 'Rotation longue, destruction des résidus, semis non profond, variétés résistantes, fongicides triazoles.',
                 'cultural_practices' => 'Rotation longue, destruction des résidus, semis non profond, variétés résistantes.',
                 'chemical_treatment' => 'Fongicides triazoles (prothioconazole, tebuconazole) à l\'épiaison.',
+                'image_path' => null,
+            ],
+            [
+                'name' => 'Cécidomyie des céréales',
+                'scientific_name' => 'Mayetiola destructor',
+                'category' => 'ravageur',
+                'target_crops' => 'Blé dur, Blé tendre, Orge',
+                'affected_crops' => ['ble_dur', 'ble_tendre', 'orge'],
+                'period' => 'Novembre à Mars (Tallage au gonflement)',
+                'symptoms' => 'Larves logées à la base de la gaine foliaire provoquant le jaunissement, le rabougrissement des talles et une verse mécanique des tiges.',
+                'control_methods' => 'Surveillance dès l\'apparition des pontes, traitement insecticide foliaire ciblé avant pénétration de la larve, travail du sol profond et rotation culturale.',
+                'cultural_practices' => 'Travail du sol profond et rotation culturale pour détruire les pupes hibernantes.',
+                'chemical_treatment' => 'Surveillance dès l\'apparition des pontes, traitement insecticide foliaire ciblé avant pénétration de la larve.',
+                'image_path' => null,
+            ],
+            [
+                'name' => 'Puceron jaune des céréales',
+                'scientific_name' => 'Sipha maydis',
+                'category' => 'ravageur',
+                'target_crops' => 'Orge, Blé dur, Avoine',
+                'affected_crops' => ['orge', 'ble_dur', 'avoine'],
+                'period' => 'Février à Avril (Montaison à l\'épiaison)',
+                'symptoms' => 'Ponctions de sève et toxines salivaires provoquant des nécrose linéaires, décoloration en pourpre/jaune et vecteur potentiel du nanisme (JNO).',
+                'control_methods' => 'Traitement aphicide homologué lorsque le seuil de 10-15 pucerons par talle est atteint.',
+                'cultural_practices' => 'Préservation de la faune auxiliaire (coccinelles, syrphes) et gestion raisonnée des apports azotés.',
+                'chemical_treatment' => 'Traitement aphicide homologué lorsque le seuil de 10-15 pucerons par talle est atteint.',
+                'image_path' => null,
+            ],
+            [
+                'name' => 'Pyrale des céréales',
+                'scientific_name' => 'Ostrinia nubilalis / Chilo spp.',
+                'category' => 'ravageur',
+                'target_crops' => 'Blé dur, Blé tendre',
+                'affected_crops' => ['ble_dur', 'ble_tendre'],
+                'period' => 'Mars à Mai (Montaison au remplissage)',
+                'symptoms' => 'Galeries internes creusées dans la tige, interruption de la sève élaborée, apparition d\'épis blancs échaudés et casse fréquente de la paille.',
+                'control_methods' => 'Gestion agronomique des résidus de culture (broyage et enfouissement des pailles), traitement larvicide préventif avant pénétration dans la tige.',
+                'cultural_practices' => 'Gestion agronomique des résidus de culture (broyage et enfouissement des pailles).',
+                'chemical_treatment' => 'Traitement larvicide préventif avant pénétration dans la tige.',
                 'image_path' => null,
             ],
         ];

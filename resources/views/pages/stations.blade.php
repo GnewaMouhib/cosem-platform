@@ -125,6 +125,20 @@
     <section class="pb-16 lg:pb-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="space-y-8">
+                {{-- Badge text is stored per station: two sites share the
+                     'Station de Conditionnement' type yet carry different roles,
+                     so the badge cannot be derived from type alone. --}}
+                @php
+                    $typeLabels = [
+                        'conditioning_station' => 'Station de Conditionnement',
+                        'storage_center' => 'Centre de Stockage',
+                        'central_lab' => 'Laboratoire Central',
+                        'specialized_station' => 'Station Spécialisée',
+                        'regional_depot' => 'Dépôt Régional',
+                        'warehouse' => 'Entrepôt / Dépôt',
+                        'multiplication_zone' => 'Zone de Multiplication',
+                    ];
+                @endphp
                 @foreach($stations as $station)
                     <article id="station-{{ $station->id }}" class="card overflow-hidden scroll-mt-24 animate-fade-in-up"
                              style="animation-delay: {{ $loop->index * 0.08 }}s">
@@ -141,7 +155,7 @@
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20"></div>
                                 <div class="absolute top-4 left-4 flex flex-col gap-2">
                                     <span class="badge bg-white/95 text-forest-700">
-                                        {{ $station->type === 'warehouse' ? 'Entrepôt / Dépôt' : ($station->type === 'multiplication_zone' ? 'Zone de Multiplication' : 'Station de Conditionnement') }}
+                                        {{ $station->badge ?? ($typeLabels[$station->type] ?? $station->type) }}
                                     </span>
                                     @if($station->installation_year)
                                         <span class="badge bg-yellow-300/95 text-forest-900">Depuis {{ $station->installation_year }}</span>
@@ -208,7 +222,7 @@
                                 </div>
 
                                 {{-- Processing lines highlight (Manouba-specific data) --}}
-                                @if($station->name === 'Station de Conditionnement de Manouba')
+                                @if($station->name === 'Siège & Complexe Industriel Principal - Manouba')
                                     <div class="mt-4 grid sm:grid-cols-3 gap-3">
                                         <div class="rounded-xl border border-emerald-100 p-3.5">
                                             <div class="font-display text-xl font-bold text-forest-700">1955</div>
@@ -219,19 +233,19 @@
                                             <div class="text-[10px] font-bold uppercase text-slate-400">Ligne d'extension</div>
                                         </div>
                                         <div class="rounded-xl border border-yellow-200 bg-harvest-50 p-3.5">
-                                            <div class="font-display text-xl font-bold text-harvest-600">40 000 QX</div>
+                                            <div class="font-display text-xl font-bold text-harvest-600">{{ number_format($station->capacity) }} QX</div>
                                             <div class="text-[10px] font-bold uppercase text-slate-400">Stockage semences</div>
                                         </div>
                                     </div>
                                 @endif
-                                @if($station->name === 'Station de Conditionnement de Tebourba')
+                                @if($station->name === 'Station de Conditionnement Tébourba 1')
                                     <div class="mt-4 rounded-xl border border-yellow-200 bg-harvest-50 p-4 flex items-center gap-4">
                                         <div class="w-10 h-10 rounded-lg bg-harvest-400 flex items-center justify-center shrink-0">
                                             <i data-lucide="gauge" class="w-5 h-5 text-white"></i>
                                         </div>
                                         <div>
                                             <div class="font-display text-lg font-bold text-ink">Unité de triage 10 T/h</div>
-                                            <div class="text-xs text-slate-500">Unité de conditionnement moderne installée en 2018.</div>
+                                            <div class="text-xs text-slate-500">Unité de conditionnement installée en {{ $station->installation_year }}.</div>
                                         </div>
                                     </div>
                                 @endif
@@ -344,6 +358,10 @@ window.addEventListener('load', function () {
 
     const typeLabels = {
         'conditioning_station': 'Station de Conditionnement',
+        'storage_center': 'Centre de Stockage',
+        'central_lab': 'Laboratoire Central',
+        'specialized_station': 'Station Spécialisée',
+        'regional_depot': 'Dépôt Régional',
         'warehouse': 'Entrepôt / Dépôt',
         'multiplication_zone': 'Zone de Multiplication'
     };
@@ -358,7 +376,7 @@ window.addEventListener('load', function () {
             <div style="font-family:Inter,sans-serif;">
                 <div style="background:linear-gradient(135deg,#14532D,#166534);padding:14px 16px;color:#fff;">
                     <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#EAB308;margin-bottom:4px;">
-                        ${typeLabels[s.type] || s.type}
+                        ${s.badge || typeLabels[s.type] || s.type}
                     </div>
                     <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;">${s.name}</div>
                 </div>

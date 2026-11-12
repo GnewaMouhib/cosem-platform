@@ -42,6 +42,7 @@ class VarietyController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        unset($data['image']);
 
         if ($request->hasFile('image')) {
             $data['image_path'] = $this->storeImage($request, 'cereal');
@@ -60,8 +61,10 @@ class VarietyController extends Controller
     public function update(Request $request, Cereal $cereal): RedirectResponse
     {
         $data = $this->validated($request);
+        unset($data['image']);
 
         if ($request->hasFile('image')) {
+            $this->deleteImage($cereal);
             $data['image_path'] = $this->storeImage($request, 'cereal');
         }
 
@@ -72,19 +75,33 @@ class VarietyController extends Controller
 
     public function destroy(Cereal $cereal): RedirectResponse
     {
-        if ($cereal->image_path && str_starts_with($cereal->image_path, 'images/') && file_exists(public_path($cereal->image_path))) {
-            @unlink(public_path($cereal->image_path));
-        }
-
+        $this->deleteImage($cereal);
         $cereal->delete();
 
         return redirect()->route('admin.cereales.index')->with('success', 'Variété supprimée avec succès.');
     }
 
+    private function deleteImage(Cereal $cereal): void
+    {
+        if (! $cereal->image_path) {
+            return;
+        }
+
+        $fullPath = realpath(public_path($cereal->image_path));
+        $allowed = realpath(public_path('images/varietes'));
+
+        if ($fullPath && $allowed && str_starts_with($fullPath, $allowed) && file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
     private function storeImage(Request $request, string $prefix): string
     {
         $file = $request->file('image');
-        $name = $prefix.'-'.uniqid().'.'.strtolower($file->getClientOriginalExtension());
+        // $file->extension() is derived from the detected MIME type (already constrained by the
+        // mimes: rule). getClientOriginalExtension() would let the uploader choose the extension
+        // of a file written straight into the public webroot.
+        $name = $prefix.'-'.uniqid().'.'.strtolower($file->extension());
         $file->move(public_path('images/varietes'), $name);
 
         return 'images/varietes/'.$name;

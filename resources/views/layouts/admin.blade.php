@@ -55,7 +55,7 @@
                 <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
                     <span class="w-2 h-2 rounded-full bg-forest-600 animate-pulse"></span>
                     <span class="text-[11px] font-bold text-forest-700">
-                        {{ \App\Models\ContactsMessage::where('is_read', false)->count() }} message(s) non lu(s)
+                        {{ $unreadCount }} message(s) non lu(s)
                     </span>
                 </div>
             </div>

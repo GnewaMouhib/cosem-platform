@@ -12,6 +12,10 @@ class StationController extends Controller
 {
     public const TYPES = [
         'conditioning_station' => 'Station de conditionnement',
+        'storage_center' => 'Centre de stockage',
+        'central_lab' => 'Laboratoire central',
+        'specialized_station' => 'Station spécialisée',
+        'regional_depot' => 'Dépôt régional',
         'warehouse' => 'Entrepôt / Dépôt',
         'multiplication_zone' => 'Zone de multiplication',
     ];
@@ -31,7 +35,14 @@ class StationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Station::create($this->validated($request) + $this->handleUpload($request));
+        $data = $this->validated($request);
+        unset($data['image']);
+
+        if ($request->hasFile('image')) {
+            $data += $this->handleUpload($request);
+        }
+
+        Station::create($data);
 
         return redirect()->route('admin.stations.index')->with('success', 'Station ajoutée avec succès.');
     }
@@ -44,6 +55,7 @@ class StationController extends Controller
     public function update(Request $request, Station $station): RedirectResponse
     {
         $data = $this->validated($request);
+        unset($data['image']);
 
         if ($request->hasFile('image')) {
             $this->deleteImage($station);
@@ -68,6 +80,7 @@ class StationController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:'.implode(',', array_keys(self::TYPES))],
+            'badge' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'governorate' => ['required', 'string', 'max:255'],
             'capacity' => ['nullable', 'integer', 'min:0'],
@@ -87,6 +100,7 @@ class StationController extends Controller
         ], [
             'name' => 'nom',
             'type' => 'type',
+            'badge' => 'badge',
             'city' => 'ville',
             'governorate' => 'gouvernorat',
             'capacity' => 'capacité (QX)',
@@ -106,7 +120,8 @@ class StationController extends Controller
         }
 
         $file = $request->file('image');
-        $fileName = 'station-'.uniqid().'.'.strtolower($file->getClientOriginalExtension());
+        // Extension derived from the detected MIME type, not from the client-supplied filename.
+        $fileName = 'station-'.uniqid().'.'.strtolower($file->extension());
         $file->move(public_path('images/stations'), $fileName);
 
         return ['image_path' => 'images/stations/'.$fileName];
@@ -114,8 +129,15 @@ class StationController extends Controller
 
     private function deleteImage(Station $station): void
     {
-        if ($station->image_path && file_exists(public_path($station->image_path))) {
-            unlink(public_path($station->image_path));
+        if (! $station->image_path) {
+            return;
+        }
+
+        $fullPath = realpath(public_path($station->image_path));
+        $allowed = realpath(public_path('images/stations'));
+
+        if ($fullPath && $allowed && str_starts_with($fullPath, $allowed) && file_exists($fullPath)) {
+            @unlink($fullPath);
         }
     }
 }

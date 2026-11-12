@@ -31,7 +31,8 @@
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     @if($station->image_path)
-                                        <img src="{{ asset($station->image_path) }}" alt="{{ $station->name }}" class="w-11 h-11 rounded-lg object-cover border border-emerald-100 shrink-0">
+                                        <img src="{{ asset($station->image_path) }}" alt="{{ $station->name }}" class="w-11 h-11 rounded-lg object-cover border border-emerald-100 shrink-0"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=200&q=80';">
                                     @else
                                         <span class="w-11 h-11 rounded-lg bg-slate-50 border border-dashed border-emerald-200 flex items-center justify-center shrink-0">
                                             <i data-lucide="image" class="w-4 h-4 text-slate-300"></i>

@@ -56,14 +56,20 @@ class CampagneController extends Controller
 
     public function update(Request $request, Year $year): RedirectResponse
     {
+        $existing = $year->annualStats()->first();
+
         $data = $request->validate([
             'durum_wheat_qx' => ['required', 'numeric', 'min:0'],
             'soft_wheat_qx' => ['required', 'numeric', 'min:0'],
             'barley_qx' => ['required', 'numeric', 'min:0'],
             'oats_qx' => ['nullable', 'numeric', 'min:0'],
-            'pulses_qx' => ['required', 'numeric', 'min:0'],
+            'feves_qx' => ['nullable', 'numeric', 'min:0'],
+            'pois_chiches_qx' => ['nullable', 'numeric', 'min:0'],
+            'feveroles_qx' => ['nullable', 'numeric', 'min:0'],
+            'lentilles_qx' => ['nullable', 'numeric', 'min:0'],
+            'pulses_qx' => ['nullable', 'numeric', 'min:0'],
             'total_hectares' => ['required', 'numeric', 'min:0'],
-            'total_multipliers' => ['required', 'integer', 'min:0'],
+            'total_multipliers' => ['nullable', 'integer', 'min:0'],
             'member_multipliers' => ['nullable', 'integer', 'min:0'],
             'certified_seed_pct' => ['nullable', 'numeric', 'between:0,100'],
             'prebasic_seed_pct' => ['nullable', 'numeric', 'between:0,100'],
@@ -73,18 +79,36 @@ class CampagneController extends Controller
             'soft_wheat_qx' => 'blé tendre (QX)',
             'barley_qx' => 'orge (QX)',
             'oats_qx' => 'avoine (QX)',
+            'feves_qx' => 'fèves (QX)',
+            'pois_chiches_qx' => 'pois chiches (QX)',
+            'feveroles_qx' => 'féveroles (QX)',
+            'lentilles_qx' => 'lentilles (QX)',
             'pulses_qx' => 'légumineuses (QX)',
-            'total_hectares' => 'superficie totale',
+            'total_hectares' => 'superficie totale (Ha)',
             'total_multipliers' => 'multiplicateurs',
             'member_multipliers' => 'multiplicateurs membres',
             'certified_seed_pct' => 'semences certifiées (%)',
             'prebasic_seed_pct' => 'semences prébasiques (%)',
             'financing_partner' => 'partenaire de financement',
-        ]) + ['oats_qx' => $request->input('oats_qx') ?: 0];
+        ]);
+
+        $data['oats_qx'] = (float) ($data['oats_qx'] ?? $existing?->oats_qx ?? 0);
+        $data['feves_qx'] = (float) ($data['feves_qx'] ?? $existing?->feves_qx ?? 0);
+        $data['pois_chiches_qx'] = (float) ($data['pois_chiches_qx'] ?? $existing?->pois_chiches_qx ?? 0);
+        $data['feveroles_qx'] = (float) ($data['feveroles_qx'] ?? $existing?->feveroles_qx ?? 0);
+        $data['lentilles_qx'] = (float) ($data['lentilles_qx'] ?? $existing?->lentilles_qx ?? 0);
+
+        $legumeSum = $data['feves_qx'] + $data['pois_chiches_qx'] + $data['feveroles_qx'] + $data['lentilles_qx'];
+        $data['pulses_qx'] = $legumeSum > 0 ? $legumeSum : (float) ($data['pulses_qx'] ?? $existing?->pulses_qx ?? 0);
+
+        $data['total_multipliers'] = (int) ($data['total_multipliers'] ?? $existing?->total_multipliers ?? 0);
+        $data['member_multipliers'] = (int) ($data['member_multipliers'] ?? $existing?->member_multipliers ?? 0);
+        $data['certified_seed_pct'] = (float) ($data['certified_seed_pct'] ?? $existing?->certified_seed_pct ?? 0);
+        $data['prebasic_seed_pct'] = (float) ($data['prebasic_seed_pct'] ?? $existing?->prebasic_seed_pct ?? 0);
 
         AnnualStat::updateOrCreate(['year_id' => $year->id], $data);
 
-        return redirect()->route('admin.campagnes.edit', $year)->with('success', 'Statistiques de la campagne '.$year->name.' modifiées avec succès.');
+        return redirect()->back()->with('success', 'Statistiques de la campagne '.$year->name.' enregistrées avec succès.');
     }
 
     public function toggleActive(Year $year): RedirectResponse

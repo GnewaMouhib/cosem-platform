@@ -19,12 +19,13 @@ class PulseController extends Controller
 
     public function create(): View
     {
-        return view('admin.pulses.create');
+        return view('admin.legumineuses.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        unset($data['image']);
 
         if ($request->hasFile('image')) {
             $data['image_path'] = $this->storeImage($request, 'pulse');
@@ -37,14 +38,16 @@ class PulseController extends Controller
 
     public function edit(Pulse $pulse): View
     {
-        return view('admin.pulses.edit', ['pulse' => $pulse]);
+        return view('admin.legumineuses.edit', ['pulse' => $pulse]);
     }
 
     public function update(Request $request, Pulse $pulse): RedirectResponse
     {
         $data = $this->validated($request);
+        unset($data['image']);
 
         if ($request->hasFile('image')) {
+            $this->deleteImage($pulse);
             $data['image_path'] = $this->storeImage($request, 'pulse');
         }
 
@@ -55,15 +58,31 @@ class PulseController extends Controller
 
     public function destroy(Pulse $pulse): RedirectResponse
     {
+        $this->deleteImage($pulse);
         $pulse->delete();
 
         return redirect()->route('admin.legumineuses.index')->with('success', 'Légumineuse supprimée avec succès.');
     }
 
+    private function deleteImage(Pulse $pulse): void
+    {
+        if (! $pulse->image_path) {
+            return;
+        }
+
+        $fullPath = realpath(public_path($pulse->image_path));
+        $allowed = realpath(public_path('images/varietes'));
+
+        if ($fullPath && $allowed && str_starts_with($fullPath, $allowed) && file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
     private function storeImage(Request $request, string $prefix): string
     {
         $file = $request->file('image');
-        $name = $prefix.'-'.uniqid().'.'.strtolower($file->getClientOriginalExtension());
+        // Extension derived from the detected MIME type, not from the client-supplied filename.
+        $name = $prefix.'-'.uniqid().'.'.strtolower($file->extension());
         $file->move(public_path('images/varietes'), $name);
 
         return 'images/varietes/'.$name;

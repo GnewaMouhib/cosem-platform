@@ -49,7 +49,8 @@
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     @if($cereal->image_path)
-                                        <img src="{{ asset($cereal->image_path) }}" alt="{{ $cereal->name }}" class="w-9 h-9 rounded-lg object-cover border border-emerald-100">
+                                        <img src="{{ asset($cereal->image_path) }}" alt="{{ $cereal->name }}" class="w-9 h-9 rounded-lg object-cover border border-emerald-100"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=200&q=80';">
                                     @else
                                         <span class="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
                                             <i data-lucide="sprout" class="w-4 h-4 text-forest-600"></i>

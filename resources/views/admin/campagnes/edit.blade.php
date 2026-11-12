@@ -34,19 +34,37 @@
                 @csrf
                 @method('PUT')
 
-                <p class="text-xs font-bold uppercase tracking-wider text-forest-700 mb-3">Récoltes en quintaux (QX)</p>
-                <div class="grid sm:grid-cols-2 gap-5 mb-6">
+                <p class="text-xs font-bold uppercase tracking-wider text-forest-700 mb-3">Récolte Céréales en quintaux (QX)</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     @foreach([
                         'durum_wheat_qx' => 'Blé dur (QX)',
                         'soft_wheat_qx' => 'Blé tendre (QX)',
                         'barley_qx' => 'Orge (QX)',
-                        'pulses_qx' => 'Légumineuses (QX)',
+                        'oats_qx' => 'Avoine (QX)',
                     ] as $field => $label)
                         <div>
                             <label for="{{ $field }}" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{{ $label }} *</label>
                             <input type="number" step="0.01" min="0" name="{{ $field }}" id="{{ $field }}" required
-                                   value="{{ old($field, $stats?->{$field}) }}"
+                                   value="{{ old($field, $stats?->{$field} ?? 0) }}"
                                    class="w-full px-4 py-3 rounded-xl bg-white border border-emerald-200 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-forest-600/30 focus:border-forest-600 transition">
+                            @error($field)<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="text-xs font-bold uppercase tracking-wider text-harvest-700 mb-3">Récolte Légumineuses par variété (QX)</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    @foreach([
+                        'feves_qx' => 'Fèves (QX)',
+                        'pois_chiches_qx' => 'Pois chiches (QX)',
+                        'feveroles_qx' => 'Féveroles (QX)',
+                        'lentilles_qx' => 'Lentilles (QX)',
+                    ] as $field => $label)
+                        <div>
+                            <label for="{{ $field }}" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{{ $label }} *</label>
+                            <input type="number" step="0.01" min="0" name="{{ $field }}" id="{{ $field }}" required
+                                   value="{{ old($field, $stats?->{$field} ?? 0) }}"
+                                   class="w-full px-4 py-3 rounded-xl bg-white border border-amber-200 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition">
                             @error($field)<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                         </div>
                     @endforeach
